@@ -13,7 +13,13 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // Middleware to enable CORS
-app.use(cors());
+//app.use(cors());
+
+app.use(cors({
+  origin: 'https://localhost:3000', // Replace with your frontend domain
+  methods: 'GET,POST,PUT,DELETE',
+  allowedHeaders: 'Content-Type,Authorization'
+}));
 
 // Middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));

@@ -48,7 +48,7 @@
             <ul role="tablist">
                 <li><a href="#home" role="tab"><i class="fa fa-home"></i></a></li>
                 <li><a href="#info" role="tab"><i class="fa fa-info"></i></a></li>
-                <li><a href="#user" role="tab"><i class="fa-solid fa-user"></i></a></li>
+                <li><a id="user" href="#user" role="tab"><i class="fa-solid fa-user"></i></a></li>
             </ul>
         </div>
 
@@ -126,59 +126,28 @@
             window.location.href = '/';
         });
 
-                // Function to get the token from cookies
-                function getCookie(name) {
-            let value = `; ${document.cookie}`;
-            let parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
+        document.getElementById('user').addEventListener('click', function() {
+           alert("hey")
+           fetchData("https://edc-central.xyz/v1/projects")
+        });
 
 
-        document.addEventListener('DOMContentLoaded', function() {
-        // Function to fetch user data
-        async function fetchUserData() {
-            const token = getCookie('token'); // Get the token from cookies
-            if (!token) {
-                console.error('No token found');
-                return;
-            }
-            try {
-                // Example API endpoints, replace with your actual endpoints
-                //const userInfoResponse = await fetch('/api/user/info');
-                const userProjectsResponse = await fetch('https://edc-central.xyz/v1/projects', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                          'mode': 'no-cors'
-                    }
-                });
-            
-                // Assuming the API returns JSON
-                //const userInfo = await userInfoResponse.json();
-                const userProjects = await userProjectsResponse.json();
-                console.log(userProjects)
+       // fetchData("https://edc-central.xyz/v1/projects")
 
-                // Update the sidebar with user info
-               // document.getElementById('userName').textContent = userInfo.name;
-               // document.getElementById('userRoles').textContent = userInfo.roles.join(', ');
+      async function fetchData(url){
+        const response = await fetch(url,{
+            method: 'GET',
+            contentType: "application/json",
+            headers: {
+                'x-requested-with': 'xhr',
+            },
+        });
+        const data = await response.json();
+        console.log(data)
+       }
+       
 
-                // Update the projects list
-                const projectsList = document.getElementById('userProjects');
-                projectsList.innerHTML = ''; // Clear the loading text
-                userProjects.forEach(project => {
-                    const li = document.createElement('li');
-                    li.textContent = project.name; // Assuming each project has a 'name' property
-                    projectsList.appendChild(li);
-                });
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-                // Handle errors, e.g., display an error message
-                document.getElementById('userInfo').innerHTML = '<p>Error loading user data.</p>';
-            }
-        }
-
-        // Call the function to fetch user data
-        fetchUserData();
-    });
+       
     </script>
 </body>
 </html>
