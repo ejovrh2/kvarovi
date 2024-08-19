@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map with Logout Button</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+
+    <!-- Leaflet Sidebar v2 CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-sidebar-v2/css/leaflet-sidebar.min.css" />
+
+    <!-- Font Awesome CSS (for icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <style>
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Logout button styles */
+        .logout-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000; /* Make sure the button is above the map */
+            padding: 10px 15px;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .logout-button:hover {
+            background-color: #ff1a1a;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="leaflet-sidebar collapsed">
+        <!-- Sidebar Tabs -->
+        <div class="leaflet-sidebar-tabs">
+            <ul role="tablist">
+                <li><a href="#home" role="tab"><i class="fa fa-home"></i></a></li>
+                <li><a href="#info" role="tab"><i class="fa fa-info"></i></a></li>
+                <li><a href="#user" role="tab"><i class="fa-solid fa-user"></i></a></li>
+            </ul>
+        </div>
+
+        <!-- Sidebar Content -->
+        <div class="leaflet-sidebar-content">
+            <div class="leaflet-sidebar-pane" id="home">
+                <h1 class="leaflet-sidebar-header">Home <span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
+                <p>This is the home section of the sidebar.</p>
+            </div>
+            <div class="leaflet-sidebar-pane" id="info">
+                <h1 class="leaflet-sidebar-header">Info <span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
+                <p>This is the info section of the sidebar.</p>
+            </div>
+            <div class="leaflet-sidebar-pane" id="user">
+                <h1 class="leaflet-sidebar-header">Korisnik <span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
+                <div id="userInfo">
+                    <p><strong>Name:</strong> <span id="userName">Loading...</span></p>
+                    <p><strong>Roles:</strong> <span id="userRoles">Loading...</span></p>
+                    <p><strong>Projects:</strong></p>
+                    <ul id="userProjects">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Logout Button -->
+    <button class="logout-button" id="logoutButton">Logout</button>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+    <!-- Leaflet Sidebar v2 JS -->
+    <script src="https://unpkg.com/leaflet-sidebar-v2/js/leaflet-sidebar.min.js"></script>
+
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([51.505, -0.09], 13);
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Initialize the sidebar
+        var sidebar = L.control.sidebar({
+            container: 'sidebar',
+            position: 'left'
+        }).addTo(map);
+
+        // Open the sidebar on map load
+        sidebar.open('home');
+
+        // Add a marker to the map
+        L.marker([51.5, -0.09]).addTo(map)
+            .bindPopup('A pretty CSS3 popup.<br> Easily customizable.')
+            .openPopup();
+
+        // Function to delete a cookie
+        function deleteCookie(name) {
+            document.cookie = name + '=; Max-Age=-99999999;';
+        }
+
+        // Logout Button functionality
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            // Delete the token cookie
+            deleteCookie('token');
+
+            // Redirect to the login page
+            window.location.href = '/';
+        });
+
+                // Function to get the token from cookies
+                function getCookie(name) {
+            let value = `; ${document.cookie}`;
+            let parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+        // Function to fetch user data
+        async function fetchUserData() {
+            const token = getCookie('token'); // Get the token from cookies
+            if (!token) {
+                console.error('No token found');
+                return;
+            }
+            try {
+                // Example API endpoints, replace with your actual endpoints
+                //const userInfoResponse = await fetch('/api/user/info');
+                const userProjectsResponse = await fetch('https://edc-central.xyz/v1/projects', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+            
+                // Assuming the API returns JSON
+                //const userInfo = await userInfoResponse.json();
+                const userProjects = await userProjectsResponse.json();
+                console.log(userProjects)
+
+                // Update the sidebar with user info
+               // document.getElementById('userName').textContent = userInfo.name;
+               // document.getElementById('userRoles').textContent = userInfo.roles.join(', ');
+
+                // Update the projects list
+                const projectsList = document.getElementById('userProjects');
+                projectsList.innerHTML = ''; // Clear the loading text
+                userProjects.forEach(project => {
+                    const li = document.createElement('li');
+                    li.textContent = project.name; // Assuming each project has a 'name' property
+                    projectsList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                // Handle errors, e.g., display an error message
+                document.getElementById('userInfo').innerHTML = '<p>Error loading user data.</p>';
+            }
+        }
+
+        // Call the function to fetch user data
+        fetchUserData();
+    });
+    </script>
+</body>
+</html>
