@@ -147,7 +147,8 @@
                 //const userInfoResponse = await fetch('/api/user/info');
                 const userProjectsResponse = await fetch('https://edc-central.xyz/v1/projects', {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                          'mode': 'no-cors'
                     }
                 });
             
