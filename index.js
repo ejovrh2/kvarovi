@@ -7,14 +7,12 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser'); // Import cookie-parser
 const path = require('path');
 
-
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 // Middleware to enable CORS
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
-
 // Middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -26,15 +24,41 @@ const loggedInUsers = new Set();
 
 // Login form route
 app.get('/', (req, res) => {
-  res.send(`
-    <h1>Login</h1>
-    <form method="post" action="/login">
-      <input type="email" name="email" placeholder="email" value="hrvojelovrich@gmail.com" required><br>
-      <input type="password" name="password" placeholder="Password" value="evalovric2023" required><br>
-      <button type="submit">Login</button>
-    </form>
-  `);
-});
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Login</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+      </head>
+      <body class="bg-light">
+        <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+          <div class="card shadow-sm" style="width: 100%; max-width: 400px;">
+            <div class="card-body">
+              <h1 class="card-title text-center mb-4">Login</h1>
+              <form method="post" action="/login">
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email"  required>
+                </div>
+                <div class="form-group">
+                  <label for="password">Password</label>
+                  <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+      </body>
+      </html>
+    `);
+  });
 
 // Login route
 app.post('/login', async (req, res) => {
@@ -67,27 +91,500 @@ app.post('/login', async (req, res) => {
 // Route to display maps (requires user to be logged in)
 app.get('/maps', async (req, res) => {
   const token = req.cookies.token;
-
+  const sqlQuery = req.query['sql-query']; 
 
   try {
-    // Fetch data from the provided URL using the token
-    const response = await axios.get('https://edc-central.xyz/v1/projects/1/forms/kvarovi.svc/Submissions', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    // Make multiple API calls with Authorization headers
+    const [podaci, listaProjekata, listaFormi, currentUser] = await Promise.all([
+      axios.get('https://edc-central.xyz/v1/projects/2/forms/CARLIT_v2.svc/Submissions?', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type':'application/json'
+        }
+      }),
+      axios.get('https://edc-central.xyz/v1/projects', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type':'application/json'
+        }
+      }),
+      axios.get('https://edc-central.xyz/v1/projects/2/forms', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type':'application/json'
+        }
+      }),
+      axios.get('https://edc-central.xyz/v1/users/current', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type':'application/json'
+        }
+      })     
+    ]);
+
     
 
-    // Extract the data from the response
-    const data = response.data.value;
-    //console.log(data)
+    const podaciForma=podaci.data
+    const podaciJson=podaciForma.value
+
+    const filteredJson = podaciJson.filter(item => item.__system.reviewState === 'approved');
+
+
+    const geojson = {
+      type: "FeatureCollection",
+      features: filteredJson.map(item => {
+          const { trace, __system, ...properties } = item;
+  
+          // Extract only the desired properties from __system
+          const systemProperties = {
+              submitterName: __system.submitterName,
+              reviewState: __system.reviewState,
+          };
+  
+          // Merge the system properties with the other properties
+          const processedProperties = { ...properties, ...systemProperties };
+  
+          // Further process properties to handle arrays and objects
+          for (const key in processedProperties) {
+              if (processedProperties.hasOwnProperty(key)) {
+                  const value = processedProperties[key];
+                  if (Array.isArray(value)) {
+                      processedProperties[key] = value.join(', ');
+                  } else if (typeof value === 'object' && value !== null) {
+                      processedProperties[key] = JSON.stringify(value);
+                  }
+              }
+          }
+  
+          return {
+              type: "Feature",
+              geometry: {
+                  type: trace.type,
+                  coordinates: trace.coordinates.map(coord => [coord[0], coord[1]]) // Remove the altitude
+              },
+              properties: processedProperties
+          };
+      })
+  };
+  
+  // Convert the GeoJSON object to a JSON string
+  const geojsonString = JSON.stringify(geojson, null, 2);
+
+
+  // Output the GeoJSON
+  //console.log(geojsonString);
+    
+
+    const projekti = listaProjekata.data;
+    let popisProjekta='<p>Popis projekata:</p>'
+    projekti.forEach(element => {
+      popisProjekta += `<p>${element.name}</p>`;
+    
+    });
+
+    const forme = listaFormi.data;
+    let popisForma='<p>Popis dostupnih formi:</p>'
+    forme.forEach(element => {
+      popisForma += `<p>${element.xmlFormId}</p>`;
+    });
+
+    const user=currentUser.data
+    let displayName = `<p>${user.displayName}</p>`;
+
+    
+
+   // Generate the content for the Info pane of the sidebar
+   
+
+     // Output the JSON data to the console
 
 
   // Display random map using Leaflet.js
   // Here, you would implement the logic to generate and send the map HTML
+  const mapHtml = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <title>Leaflet Map with Sidebar</title>
   
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      <meta charset="utf-8">
+  
+      <!-- Leaflet CSS and JS -->
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+          crossorigin="" />
+      <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+          integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+          crossorigin=""></script>
+  
+      <!-- Leaflet Sidebar V2 CSS and JS -->
+      <link rel="stylesheet" href="https://unpkg.com/leaflet-sidebar-v2@3.1.1/css/leaflet-sidebar.min.css">
+      <script src="https://unpkg.com/leaflet-sidebar-v2@3.1.1/js/leaflet-sidebar.min.js"></script>
+  
+      <!-- Bootstrap CSS -->
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  
+      <!-- jQuery, Popper.js, and Bootstrap JS -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  
+      <!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.js" integrity="sha512-pb9UiEEi2JIxkMloqYnqgONe9CTcp2BWWq1Hbz60l7f3R3VhZ57dEE58Ritf/HgBw3o/5Scf5gg0T9V+tf48fg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-  res.sendFile(path.join(__dirname, 'public', 'karta.html'));
+      <style>
+          body {
+              padding: 0;
+              margin: 0;
+          }
+  
+          html, body, #map {
+              height: 100%;
+              font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+          }
+              #sidebar{
+              opacity:0.8;
+              }
+  
+          .lorem {
+              font-style: italic;
+              color: #AAA;
+          }
+                     #sidebar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+     .filter-box {
+        margin-bottom: 1rem;
+    }
+    .filter-box h4 {
+        margin-bottom: 0.5rem;
+    }
+    .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .btn-group .btn {
+        flex: 1 1 30%; /* Adjust percentage to fit 3 buttons per row */
+        margin: 0.5rem;
+    }
+
+    
+      </style>
+  </head>
+  <body>
+      <div id="map"></div>
+      <div id="sidebar" class="leaflet-sidebar collapsed">
+          <div class="leaflet-sidebar-tabs">
+              <ul role="tablist">
+                  <li><a href="#home" role="tab"><i class="fa fa-home"></i></a></li>
+                  <li><a href="#filter" role="tab"><i class="fa-solid fa-filter"></i></a></li>
+                  <li><a id="downloadBtn" href="#download" role="tab"><i class="fa-solid fa-download"></i></a></li>
+                   <li><a href="#info" role="tab"><i class="fa fa-info"></i></a></li>
+                    <li><a href="/logout" role="tab"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
+              </ul>
+          </div>
+          <div class="leaflet-sidebar-content">
+              <div class="leaflet-sidebar-pane" id="home">
+                  <h1 class="leaflet-sidebar-header"> ${displayName}</h1>
+                  <p class="lorem">Dobrodošli</p>
+              </div>
+               <div class="leaflet-sidebar-pane sidebar" id="filter">
+                  <h1 class="leaflet-sidebar-header">Fitriraj podatke na karti</h1>
+
+              </div>
+
+               <div class="leaflet-sidebar-pane" id="download">
+                  <h1 class="leaflet-sidebar-header"> ${displayName}</h1>
+                  <p class="lorem">Preuzmi podatke</p>
+              </div>
+
+              <div class="leaflet-sidebar-pane" id="info">
+              <h1 class="leaflet-sidebar-header">Info</h1>
+              <h3>Popis dostupnih projekata i formi</h3>
+                   
+                    ${popisProjekta} 
+                    ${popisForma} 
+                  
+              </div>
+          </div>
+      </div>
+      <script>
+
+
+             let geojsonLayer;
+        let originalFeatures = [];
+        let filteredFeatures = [];
+        let activeFilters = {};
+
+        const map = L.map('map').setView([45.0, 15.0], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const sidebar = L.control.sidebar('sidebar', {
+            position: 'left'
+        }).addTo(map);
+
+
+             var lyrDOF = new L.TileLayer.WMS('https://geoportal.dgu.hr/services/dof/wms', {
+      layers: 'DOF5_2011',
+      format: 'image/png',
+      transparent: true,
+      version: '1.3.0',
+      //crs: crs,
+      //crs: L.CRS.EPSG3765
+    });
+        lyrOSM = L.tileLayer.provider('OpenStreetMap.Mapnik').addTo(map);
+
+
+                  objBasemaps = {
+            "DOF": lyrDOF,
+            "OSM": lyrOSM,
+
+        };
+
+                objOverlays = {
+         
+        };
+
+        ctlLayers = L.control.layers(objBasemaps, objOverlays).addTo(map);
+
+        function addGeoJSONLayer(data) {
+            originalFeatures = data.features;
+            filteredFeatures = [...originalFeatures];
+            geojsonLayer = L.geoJSON({ type: 'FeatureCollection', features: filteredFeatures }, {
+                style: function (feature) {
+                    return { color: 'blue' };
+                },
+                onEachFeature: function (feature, layer) {
+                    layer.on('click', function () {
+                        var properties = feature.properties;
+                        var popupContent = "<ul>";
+                        for (var key in properties) {
+                            if (properties.hasOwnProperty(key)) {
+                                popupContent += "<li><strong>" + key + ":</strong> " + properties[key] + "</li>";
+                            }
+                        }
+                        popupContent += "</ul>";
+                        layer.bindPopup(popupContent).openPopup();
+                    });
+                }
+            }).addTo(map);
+
+            ctlLayers.addOverlay(geojsonLayer, "CARLIT_V2");
+
+                 if (filteredFeatures.length > 0) {
+        const bounds = L.geoJSON({ type: 'FeatureCollection', features: filteredFeatures }).getBounds();
+        map.fitBounds(bounds);
+
+    }
+
+            initializeFilters();
+        }
+
+       function createFilterBoxes(attributes) {
+    const filterDiv = document.getElementById('filter');
+    filterDiv.innerHTML = '<h1 class="leaflet-sidebar-header">Filtriraj CARLIT_v2</h1>';
+
+    attributes.forEach(attribute => {
+        const uniqueValues = [...new Set(filteredFeatures.flatMap(feature => feature.properties[attribute] ?? 'null'))];
+        
+        const boxDiv = document.createElement('div');
+        boxDiv.className = 'filter-box mb-3';
+       boxDiv.style.margin = '5px';
+
+        const heading = document.createElement('h4');
+        heading.textContent = attribute;
+        heading.style.color = 'white'; // Set text color to white
+        heading.style.backgroundColor = '#0074d9'; // Set background color to yellow
+        heading.style.textAlign = 'center'; // Center text
+        heading.style.borderRadius = '0.5cm'; // Set border radius to 0.5cm
+        boxDiv.appendChild(heading);
+
+        const buttonGroup = document.createElement('div');
+         
+        buttonGroup.className = 'btn-group';
+
+        uniqueValues.forEach(value => {
+            const button = document.createElement('button');
+            button.className = 'btn btn-outline-primary';
+            button.textContent = value === 'null' ? 'null' : value;
+              button.style.borderRadius = '0.5cm'; 
+            button.dataset.attribute = attribute;
+            button.dataset.value = value;
+
+            // Check if the button should be active
+            if (activeFilters[attribute] === value) {
+                button.classList.remove('btn-outline-primary');
+                button.classList.add('btn-success');
+            }
+
+            button.addEventListener('click', () => handleButtonClick(attribute, value, button));
+            buttonGroup.appendChild(button);
+        });
+
+        boxDiv.appendChild(buttonGroup);
+        filterDiv.appendChild(boxDiv);
+    });
+}
+
+function handleButtonClick(attribute, value, clickedButton) {
+    // Toggle button class based on its current state
+    if (clickedButton.classList.contains('btn-success')) {
+        clickedButton.classList.remove('btn-success');
+        clickedButton.classList.add('btn-outline-primary');
+        delete activeFilters[attribute];
+    } else {
+        clickedButton.classList.remove('btn-outline-primary');
+        clickedButton.classList.add('btn-success');
+        activeFilters[attribute] = value;
+    }
+
+    // Apply the filters and update the filter buttons
+    applyFilters();
+}
+
+      function applyFilters() {
+
+
+       ctlLayers.removeLayer(geojsonLayer);
+        map.removeLayer(geojsonLayer)
+
+    // Filter the features based on active filters
+    filteredFeatures = originalFeatures.filter(feature => {
+        for (const [attribute, value] of Object.entries(activeFilters)) {
+            const featureValue = feature.properties[attribute];
+            if (!(featureValue === value || (value === 'null' && featureValue == null))) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    // Update the GeoJSON layer with filtered features
+    geojsonLayer.clearLayers();
+
+    geojsonLayer = L.geoJSON({ type: 'FeatureCollection', features: filteredFeatures }, {
+        style: function (feature) {
+            return { color: 'blue' };
+        },
+        onEachFeature: function (feature, layer) {
+            layer.on('click', function () {
+                var properties = feature.properties;
+                var popupContent = "<ul>";
+                for (var key in properties) {
+                    if (properties.hasOwnProperty(key)) {
+                        popupContent += "<li><strong>" + key + ":</strong> " + properties[key] + "</li>";
+                    }
+                }
+                popupContent += "</ul>";
+                layer.bindPopup(popupContent).openPopup();
+            });
+        }
+    }).addTo(map);
+
+     ctlLayers.addOverlay(geojsonLayer, "CARLIT_V2");
+
+      if (filteredFeatures.length > 0) {
+        const bounds = L.geoJSON({ type: 'FeatureCollection', features: filteredFeatures }).getBounds();
+        map.fitBounds(bounds);
+    }
+
+    // Update the filter buttons based on filtered features
+    updateFilterButtons();
+}
+
+       function updateFilterButtons() {
+    // Extract attributes from filtered features
+    const excludeAttributes = ['start', 'end', 'username', 'biljeska', 'meta', '__id'];
+    const attributes = [...new Set(filteredFeatures.flatMap(feature => Object.keys(feature.properties)))]
+        .filter(attr => !excludeAttributes.includes(attr));
+
+    // Create filter boxes for the current attributes
+    createFilterBoxes(attributes);
+}
+
+        function initializeFilters() {
+            const excludeAttributes = ['start', 'end', 'username', 'biljeska', 'meta', '__id'];
+            const attributes = [...new Set(originalFeatures.flatMap(feature => Object.keys(feature.properties)))]
+                .filter(attr => !excludeAttributes.includes(attr));
+
+            createFilterBoxes(attributes);
+        }
+
+        const geojsonData = {
+            "type": "FeatureCollection",
+            "features": [
+                // Add your GeoJSON features here
+            ]
+        };
+
+        addGeoJSONLayer(${geojsonString});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+    // Convert filtered GeoJSON data to a Blob and trigger download
+   sidebar.close();
+    downloadFilteredData();
+});
+
+function downloadFilteredData() {
+    // Get the current GeoJSON data from the map
+    const filteredGeoJSON = getFilteredGeoJSON();
+    
+    // Convert GeoJSON data to a JSON string
+    const dataStr = JSON.stringify(filteredGeoJSON, null, 2);
+    
+    // Create a Blob from the JSON string
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    
+    // Create a link element
+    const link = document.createElement('a');
+    
+    // Set the download attribute with a filename
+    link.href = URL.createObjectURL(blob);
+    link.download = 'filtered_data.geojson';
+    
+    // Append the link to the document
+    document.body.appendChild(link);
+    
+    // Programmatically click the link to trigger the download
+    link.click();
+    
+    // Remove the link from the document
+    document.body.removeChild(link);
+}
+
+function getFilteredGeoJSON() {
+    // Retrieve the filtered features from the map
+    const filteredFeatures = geojsonLayer.getLayers().map(layer => layer.feature);
+    
+    // Create a GeoJSON object
+    return {
+        type: 'FeatureCollection',
+        features: filteredFeatures
+    };
+}
+
+
+ 
+      </script>
+  </body>
+  </html>
+  `;
+  
+  res.send(mapHtml);
+  
 } catch (error) {
   console.error(error);
   //res.send('<h1>Error fetching data.</h1>');
