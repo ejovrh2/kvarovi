@@ -41,11 +41,11 @@ app.get('/', (req, res) => {
               <form method="post" action="/login">
                 <div class="form-group">
                   <label for="email">Email</label>
-                  <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email"  required>
+                  <input type="email" class="form-control" id="email" name="email" value="hrvojelovrich@gmail.com" placeholder="Enter your email"  required>
                 </div>
                 <div class="form-group">
                   <label for="password">Password</label>
-                  <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                  <input type="password" class="form-control" id="password" name="password" value="evalovric2023" placeholder="Enter your password" required>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Login</button>
               </form>
@@ -176,17 +176,95 @@ app.get('/maps', async (req, res) => {
     
 
     const projekti = listaProjekata.data;
-    let popisProjekta='<p>Popis projekata:</p>'
-    projekti.forEach(element => {
-      popisProjekta += `<p>${element.name}</p>`;
+    let popisProjekta=  `
+    <p class="text-primary font-weight-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Popis projekata:</p>
+    <div id="projectCarousel" class="carousel slide mt-3" data-ride="carousel">
+        <ol class="carousel-indicators">
+    `;
     
+    // Add carousel indicators
+    projekti.forEach((element, index) => {
+        popisProjekta += `
+            <li data-target="#projectCarousel" data-slide-to="${index}"${index === 0 ? ' class="active"' : ''}></li>
+        `;
     });
+    
+    popisProjekta += `
+        </ol>
+        <div class="carousel-inner">
+    `;
+    
+    // Add carousel items with random Picsum Photos images
+    projekti.forEach((element, index) => {
+        const imageUrl = `https://picsum.photos/800/400?random=${index}`; // Random image with size 800x400
+        popisProjekta += `
+            <div class="carousel-item${index === 0 ? ' active' : ''}">
+                <img class="d-block w-100" src="${imageUrl}" alt="${element.name}">
+                <div class="carousel-caption d-none d-md-block" style=" color: white; font-weight: bold; text-shadow: 1px 1px 2px black;font-family: cursive;">
+                    <h5>${element.name}</h5>
+                </div>
+            </div>
+        `;
+    });
+    
+    popisProjekta += `
+        </div>
+        <a class="carousel-control-prev" href="#projectCarousel" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#projectCarousel" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+    </div>
+    `;
 
     const forme = listaFormi.data;
-    let popisForma='<p>Popis dostupnih formi:</p>'
-    forme.forEach(element => {
-      popisForma += `<p>${element.xmlFormId}</p>`;
+    let popisForma= `
+    <p class="text-primary font-weight-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Popis formi:</p>
+    <div id="projectCarousel" class="carousel slide mt-3" data-ride="carousel">
+        <ol class="carousel-indicators">
+    `;
+    
+    // Add carousel indicators
+    forme.forEach((element, index) => {
+        popisForma += `
+            <li data-target="#projectCarousel" data-slide-to="${index}"${index === 0 ? ' class="active"' : ''}></li>
+        `;
     });
+    
+    popisForma += `
+        </ol>
+        <div class="carousel-inner">
+    `;
+    
+    // Add carousel items with random Picsum Photos images
+    forme.forEach((element, index) => {
+        const imageUrl = `https://picsum.photos/800/400?random=${index}`; // Random image with size 800x400
+        popisForma += `
+            <div class="carousel-item${index === 0 ? ' active' : ''}">
+                <img class="d-block w-100" src="${imageUrl}" alt="${element.name}">
+                <div class="carousel-caption d-none d-md-block" style=" color: white; font-weight: bold; text-shadow: 1px 1px 2px black;font-family: cursive;">
+                    <h5>${element.name}</h5>
+                </div>
+            </div>
+        `;
+    });
+    
+    popisForma += `
+        </div>
+        <a class="carousel-control-prev" href="#projectCarousel" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#projectCarousel" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+    </div>
+    `;
+
 
     const user=currentUser.data
     let displayName = `<p>${user.displayName}</p>`;
@@ -211,12 +289,14 @@ app.get('/maps', async (req, res) => {
       <meta charset="utf-8">
   
       <!-- Leaflet CSS and JS -->
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-          crossorigin="" />
-      <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-          integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-          crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css"
+/>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
   
       <!-- Leaflet Sidebar V2 CSS and JS -->
       <link rel="stylesheet" href="https://unpkg.com/leaflet-sidebar-v2@3.1.1/css/leaflet-sidebar.min.css">
@@ -234,6 +314,16 @@ app.get('/maps', async (req, res) => {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.js" integrity="sha512-pb9UiEEi2JIxkMloqYnqgONe9CTcp2BWWq1Hbz60l7f3R3VhZ57dEE58Ritf/HgBw3o/5Scf5gg0T9V+tf48fg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+<!-- Include Leaflet Browser Print CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.browser.print/dist/leaflet.browser.print.min.css" />
+
+<!-- Include Leaflet Browser Print JS -->
+<script src="https://unpkg.com/leaflet.browser.print/dist/leaflet.browser.print.min.js"></script>
+
+
+<script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.js"></script>
 
       <style>
           body {
@@ -278,7 +368,7 @@ app.get('/maps', async (req, res) => {
         margin: 0.5rem;
     }
 
-    
+
       </style>
   </head>
   <body>
@@ -290,14 +380,18 @@ app.get('/maps', async (req, res) => {
                   <li><a href="#filter" role="tab"><i class="fa-solid fa-filter"></i></a></li>
                   <li><a id="downloadBtn" href="#download" role="tab"><i class="fa-solid fa-download"></i></a></li>
                    <li><a href="#info" role="tab"><i class="fa fa-info"></i></a></li>
+                    <li><a href="#setup" role="tab"><i class="fa fa-cog"></i></a></li>
+
+
                     <li><a href="/logout" role="tab"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
               </ul>
           </div>
           <div class="leaflet-sidebar-content">
               <div class="leaflet-sidebar-pane" id="home">
                   <h1 class="leaflet-sidebar-header"> ${displayName}</h1>
-                  <p class="lorem">Dobrodošli</p>
-              </div>
+                  <h4>Poštovani, ovdje su dostupni svi podaci koji su odobreni (eng.approved) unutar ODK Central servera na kojem se prikupljaju podaci iz pripremljenih formi.</h4>
+             <h4>Koristite isti username i password za editiranje podataka direktno na Central serveru dosupnom na adresi <a href="https://edc-central.xyz/" target="_blank">EDC central server</a> </h4>
+                  </div>
                <div class="leaflet-sidebar-pane sidebar" id="filter">
                   <h1 class="leaflet-sidebar-header">Fitriraj podatke na karti</h1>
 
@@ -305,18 +399,48 @@ app.get('/maps', async (req, res) => {
 
                <div class="leaflet-sidebar-pane" id="download">
                   <h1 class="leaflet-sidebar-header"> ${displayName}</h1>
-                  <p class="lorem">Preuzmi podatke</p>
+                  <h4 class="lorem">Preuzmi podatke</h4>
+                  <p>Podaci se preuzimaju u popularnom geojson formatu. Ukoliko se odabarli neke filtere, preuzeti file će sadržavati samo filtrirane podatke.</p>
               </div>
 
               <div class="leaflet-sidebar-pane" id="info">
-              <h1 class="leaflet-sidebar-header">Info</h1>
-              <h3>Popis dostupnih projekata i formi</h3>
-                   
+              <h1 class="leaflet-sidebar-header">Lista projekta i formi</h1>
+
+              
+              
                     ${popisProjekta} 
                     ${popisForma} 
                   
               </div>
-          </div>
+
+        <div class="leaflet-sidebar-pane" id="setup">
+            <h1 class="leaflet-sidebar-header">Setup</h1>
+            <div class="form-group">
+                <label class="form-label" for="toggleZoom">Kontrole zoom na karti</label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggleZoom" checked>
+                    <label class="form-check-label" for="toggleZoom">Omogući tipke</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="toggleZoom">Grafičko mjerilo na karti</label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggleScale" >
+                    <label class="form-check-label" for="toggleScale">Omogući mjerilo</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="toggleZoom">Crtanje na karti</label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggleDraw" >
+                    <label class="form-check-label" for="toggleDraw">Omogući crtanje na karti</label>
+                </div>
+            </div>
+        </div>
+
+
+
+        </div>
       </div>
       <script>
 
@@ -326,15 +450,9 @@ app.get('/maps', async (req, res) => {
         let filteredFeatures = [];
         let activeFilters = {};
 
-        const map = L.map('map').setView([45.0, 15.0], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        const map = L.map('map',{ zoomControl: false,tap:false }).setView([45.0, 15.0], 8);
 
-        const sidebar = L.control.sidebar('sidebar', {
-            position: 'left'
-        }).addTo(map);
+            
 
 
              var lyrDOF = new L.TileLayer.WMS('https://geoportal.dgu.hr/services/dof/wms', {
@@ -342,6 +460,7 @@ app.get('/maps', async (req, res) => {
       format: 'image/png',
       transparent: true,
       version: '1.3.0',
+      attribution: '© <a href="https://dgu.gov.hr/" target="_blank">Državna geodetska uprava</a>'
       //crs: crs,
       //crs: L.CRS.EPSG3765
     });
@@ -359,6 +478,94 @@ app.get('/maps', async (req, res) => {
         };
 
         ctlLayers = L.control.layers(objBasemaps, objOverlays).addTo(map);
+
+
+
+
+
+        let zoomControl;
+
+    // Initial state: No zoom controls (as per your requirement)
+    const zoomControlToggle = document.getElementById('toggleZoom');
+    zoomControlToggle.checked = false;
+
+    // Function to add or remove zoom controls
+    function updateZoomControls() {
+        if (zoomControlToggle.checked) {
+            if (!zoomControl) {
+                zoomControl = new L.Control.Zoom({ position: 'topright' });
+                zoomControl.addTo(map);
+            }
+        } else {
+            if (zoomControl) {
+                map.removeControl(zoomControl);
+                zoomControl = null;
+            }
+        }
+    }
+
+    // Listen for the toggle change event
+    zoomControlToggle.addEventListener('change', updateZoomControls);
+
+    let scaleControl;
+
+    const scaleControlToggle = document.getElementById('toggleScale');
+    scaleControlToggle.checked = false;
+
+    function updateScaleControls() {
+        if (scaleControlToggle.checked) {
+            if (!scaleControl) {
+                scaleControl = new L.control.scale({position: 'bottomright'});
+                scaleControl.addTo(map);
+            }
+        } else {
+            if (scaleControl) {
+                map.removeControl(scaleControl);
+                scaleControl = null;
+            }
+        }
+    }
+
+    // Listen for the toggle change event
+    scaleControlToggle.addEventListener('change', updateScaleControls);
+
+
+     let drawControl;
+
+    const drawControlToggle = document.getElementById('toggleDraw');
+    drawControlToggle.checked = false;
+
+    function updatedrawControls() {
+        if (drawControlToggle.checked) {
+            if (!drawControl) {
+          var options = {
+  position: 'topright', // toolbar position, options are 'topleft', 'topright', 'bottomleft', 'bottomright'
+  drawMarker: true,  // adds button to draw markers
+  drawPolygon: true,  // adds button to draw a polygon
+  drawPolyline: true,  // adds button to draw a polyline
+  drawCircle: true,  // adds button to draw a cricle
+  drawCircleMarker: true,  // adds button to draw a cricleMarker
+  drawRectangle: true,  // adds button to draw a rectangle
+  cutPolygon: true,   // adds a button to cut layers
+  dragMode: true,  // adds button to toggle global move mode
+  deleteLayer: true,   // adds a button to delete layers
+  editMode: true,  // adds button to toggle global edit mode
+};
+
+// add leaflet.pm controls to the map
+map.pm.addControls(options);
+            }
+        } else {
+           
+               map.pm.removeControls();
+               
+               
+            
+        }
+    }
+
+    // Listen for the toggle change event
+    drawControlToggle.addEventListener('change', updatedrawControls);
 
         function addGeoJSONLayer(data) {
             originalFeatures = data.features;
@@ -382,6 +589,26 @@ app.get('/maps', async (req, res) => {
                 }
             }).addTo(map);
 
+
+        // Example event listener
+        map.on('pm:create', (e) => {
+            console.log('Feature created:', e);
+        });
+
+        map.on('pm:remove', (e) => {
+            console.log('Feature removed:', e);
+        });
+
+        map.on('pm:edit', (e) => {
+            console.log('Feature edited:', e);
+        });
+      
+
+        const sidebar = L.control.sidebar('sidebar', {
+            position: 'left',
+             closeButton: true, 
+        }).addTo(map);
+
             ctlLayers.addOverlay(geojsonLayer, "CARLIT_V2");
 
                  if (filteredFeatures.length > 0) {
@@ -392,6 +619,25 @@ app.get('/maps', async (req, res) => {
 
             initializeFilters();
         }
+
+        // Create a custom control for attribution
+L.Control.CustomAttribution = L.Control.extend({
+    options: {
+        position: 'bottomright',
+        attribution: ''
+    },
+    onAdd: function (map) {
+        var container = L.DomUtil.create('div', 'leaflet-control-attribution');
+        container.innerHTML = this.options.attribution;
+        return container;
+    }
+});
+
+// Create and add the attribution control
+const customAttributionControl = new L.Control.CustomAttribution({
+    attribution: 'Layer Carlit_v2 provided by <a href="https://edc-central.xyz" target="_blank">ODK Central</a>'
+});
+customAttributionControl.addTo(map);
 
        function createFilterBoxes(attributes) {
     const filterDiv = document.getElementById('filter');
@@ -534,7 +780,7 @@ function handleButtonClick(attribute, value, clickedButton) {
 
 document.getElementById('downloadBtn').addEventListener('click', () => {
     // Convert filtered GeoJSON data to a Blob and trigger download
-   sidebar.close();
+   //sidebar.close();
     downloadFilteredData();
 });
 
