@@ -41,11 +41,11 @@ app.get('/', (req, res) => {
               <form method="post" action="/login">
                 <div class="form-group">
                   <label for="email">Email</label>
-                  <input type="email" class="form-control" id="email" name="email" value="hrvojelovrich@gmail.com" placeholder="Enter your email"  required>
+                  <input type="email" class="form-control" id="email" name="email" value="Edi.Gljuscic@irb.hr" placeholder="Enter your email"  required>
                 </div>
                 <div class="form-group">
                   <label for="password">Password</label>
-                  <input type="password" class="form-control" id="password" name="password" value="evalovric2023" placeholder="Enter your password" required>
+                  <input type="password" class="form-control" id="password" name="password" value="irbcim2024" placeholder="Enter your password" required>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Login</button>
               </form>
@@ -222,48 +222,24 @@ app.get('/maps', async (req, res) => {
 
     const forme = listaFormi.data;
     let popisForma= `
-    <p class="text-primary font-weight-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Popis formi:</p>
-    <div id="formCarousel" class="carousel slide mt-3" data-ride="carousel">
-        <ol class="carousel-indicators">
-    `;
+<p class="text-primary font-weight-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Popis formi:</p>
+<div class="row">
+`;
     
-    // Add carousel indicators
-    forme.forEach((element, index) => {
-        popisForma += `
-            <li data-target="#formCarousel" data-slide-to="${index}"${index === 0 ? ' class="active"' : ''}></li>
-        `;
-    });
-    
+forme.forEach((element, index) => {
+    const imageUrl = `https://picsum.photos/140/140?random=${index}`; // Random image with size 140x140
     popisForma += `
-        </ol>
-        <div class="carousel-inner">
-    `;
-    
-    // Add carousel items with random Picsum Photos images
-    forme.forEach((element, index) => {
-        const imageUrl = `https://picsum.photos/800/400?random=${index}`; // Random image with size 800x400
-        popisForma += `
-            <div class="carousel-item${index === 0 ? ' active' : ''}">
-                <img class="d-block w-100" src="${imageUrl}" alt="${element.name}">
-                <div class="carousel-caption d-none d-md-block" style=" color: white; font-weight: bold; text-shadow: 1px 1px 2px black;font-family: cursive;">
-                    <h5>${element.name}</h5>
-                </div>
-            </div>
-        `;
-    });
-    
-    popisForma += `
+        <div class="col-lg-4 text-center mb-4">
+            <img src="${imageUrl}" class="bd-placeholder-img rounded-circle" width="140" height="140" alt="${element.name}">
+            <h2 class="text-secondary font-weight-bold" style="font-size: 1.5rem; margin-bottom: 15px;">${element.name}</h2>
+            <p>Projekt ${element.name} osmišljen je za prikupljanje obalnih podataka.</p>
+            <p><a class="btn btn-light" href="#">Pogledaj detalje »</a></p>
         </div>
-        <a class="carousel-control-prev" href="#formCarousel" role="button" data-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="sr-only">Previous</span>
-        </a>
-        <a class="carousel-control-next" href="#formCarousel" role="button" data-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="sr-only">Next</span>
-        </a>
-    </div>
     `;
+});
+
+popisForma += `</div>`;
+
 
 
     const user=currentUser.data
