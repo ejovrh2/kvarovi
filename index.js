@@ -223,14 +223,14 @@ app.get('/maps', async (req, res) => {
     const forme = listaFormi.data;
     let popisForma= `
     <p class="text-primary font-weight-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Popis formi:</p>
-    <div id="projectCarousel" class="carousel slide mt-3" data-ride="carousel">
+    <div id="formCarousel" class="carousel slide mt-3" data-ride="carousel">
         <ol class="carousel-indicators">
     `;
     
     // Add carousel indicators
     forme.forEach((element, index) => {
         popisForma += `
-            <li data-target="#projectCarousel" data-slide-to="${index}"${index === 0 ? ' class="active"' : ''}></li>
+            <li data-target="#formCarousel" data-slide-to="${index}"${index === 0 ? ' class="active"' : ''}></li>
         `;
     });
     
@@ -254,11 +254,11 @@ app.get('/maps', async (req, res) => {
     
     popisForma += `
         </div>
-        <a class="carousel-control-prev" href="#projectCarousel" role="button" data-slide="prev">
+        <a class="carousel-control-prev" href="#formCarousel" role="button" data-slide="prev">
             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
             <span class="sr-only">Previous</span>
         </a>
-        <a class="carousel-control-next" href="#projectCarousel" role="button" data-slide="next">
+        <a class="carousel-control-next" href="#formCarousel" role="button" data-slide="next">
             <span class="carousel-control-next-icon" aria-hidden="true"></span>
             <span class="sr-only">Next</span>
         </a>
