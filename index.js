@@ -343,7 +343,22 @@ popisForma += `</div>`;
         flex: 1 1 30%; /* Adjust percentage to fit 3 buttons per row */
         margin: 0.5rem;
     }
+.drop-area {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 20px;
+    cursor: pointer;
+}
 
+.drop-area.hover {
+    border-color: #333;
+}
+
+#fileSelect {
+    margin-top: 10px;
+}
 
       </style>
   </head>
@@ -357,6 +372,7 @@ popisForma += `</div>`;
                   <li><a id="downloadBtn" href="#download" role="tab"><i class="fa-solid fa-download"></i></a></li>
                    <li><a href="#info" role="tab"><i class="fa fa-info"></i></a></li>
                     <li><a href="#setup" role="tab"><i class="fa fa-cog"></i></a></li>
+            <li><a href="#upload" role="tab"><i class="fa fa-upload"></i></a></li>
 
 
                     <li><a href="/logout" role="tab"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
@@ -414,6 +430,15 @@ popisForma += `</div>`;
             </div>
         </div>
 
+<div class="leaflet-sidebar-pane" id="upload"> <!-- New upload section -->
+    <h1 class="leaflet-sidebar-header">Upload GeoJSON</h1>
+    <div id="drop-area" class="drop-area border border-primary rounded p-3 text-center" style="height: 200px;">
+        <h3>Drag & Drop GeoJSON file here</h3>
+        <input type="file" id="fileElem" accept=".geojson, .json" style="display:none;">
+        <button id="fileSelect" class="btn btn-primary">Select GeoJSON File</button>
+    </div>
+    <p id="upload-status" class="mt-3"></p>
+</div>
 
 
         </div>
@@ -454,8 +479,6 @@ popisForma += `</div>`;
         };
 
         ctlLayers = L.control.layers(objBasemaps, objOverlays).addTo(map);
-
-
 
 
 
@@ -798,7 +821,136 @@ function getFilteredGeoJSON() {
     };
 }
 
+let uploadedGeojson = null;
 
+// Function to handle file uploads
+function handleFiles(files) {
+    if (files.length === 0) return;
+
+    const file = files[0];
+    if (file && (file.type === "application/json" || file.name.endsWith(".geojson") || file.name.endsWith(".json"))) {
+        console.log('File selected:', file);
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const fileContent = event.target.result;  // Get file content
+            const fileContentJSON = JSON.parse(fileContent, null, 2); 
+            console.log('File content:', fileContentJSON);  // Log file content
+
+            try {
+                const geojson2 = fileContentJSON
+;
+                if (isValidGeoJSON(geojson2)) {
+                    
+                    addGeoJSONUploadLayer(geojson2);  // Use the function to add the layer
+                    document.getElementById('upload-status').textContent = "File uploaded and parsed successfully.";
+                } else {
+                    alert("Uploaded GeoJSON is not valid.");
+                    document.getElementById('upload-status').textContent = "Uploaded GeoJSON is not valid.";
+                }
+            } catch (e) {
+                console.error("Failed to parse GeoJSON:", e);
+                alert("Error parsing GeoJSON file.");
+                document.getElementById('upload-status').textContent = "Error parsing GeoJSON file.";
+            }
+        };
+        reader.onerror = (error) => {
+            console.error('File reading error:', error);
+            alert('Error reading file.');
+            document.getElementById('upload-status').textContent = "Error reading file.";
+        };
+        reader.readAsText(file);  // Read file content as text
+    } else {
+        alert("Please upload a valid GeoJSON file.");
+        document.getElementById('upload-status').textContent = "Please upload a valid GeoJSON file.";
+    }
+}
+
+// Function to validate GeoJSON
+function isValidGeoJSON(geojson) {
+    // Basic validation checks
+    if (!geojson || typeof geojson !== 'object') return false;
+    if (!geojson.type || geojson.type !== 'FeatureCollection') return false;
+    if (!geojson.features || !Array.isArray(geojson.features)) return false;
+    return true;
+}
+
+// Function to add the uploaded GeoJSON layer to the map
+function addGeoJSONUploadLayer(geojson) {
+    // Remove the previous GeoJSON layer if it exists
+    if (uploadedGeojson) {
+        map.removeLayer(uploadedGeojson);
+        ctlLayers.removeLayer(uploadedGeojson);
+    }
+
+    // Add the new GeoJSON layer to the map
+    uploadedGeojson = L.geoJson(geojson, {
+        onEachFeature: function (feature, layer) {
+            layer.on('click', function () {
+                var properties = feature.properties;
+                var popupContent = "<ul>";
+                for (var key in properties) {
+                    if (properties.hasOwnProperty(key)) {
+                        popupContent += "<li><strong>" + key + ":</strong> " + properties[key] + "</li>";
+                    }
+                }
+                popupContent += "</ul>";
+                layer.bindPopup(popupContent).openPopup();
+            });
+        },
+        style: function (feature) {
+            return {
+                color: "#ff7800",
+                weight: 5,
+                opacity: 0.65
+            };
+        }
+    }).addTo(map);
+
+    // Add the layer to the overlay control
+    ctlLayers.addOverlay(uploadedGeojson, "Uploaded GeoJSON");
+
+        // Zoom to the bounds of the GeoJSON data
+    const bounds = uploadedGeojson.getBounds();
+    if (bounds.isValid()) {
+        map.fitBounds(bounds);
+    }
+}
+
+// Event listeners for file input
+document.getElementById('fileElem').addEventListener('change', (event) => {
+    handleFiles(event.target.files);  // Directly call handleFiles with the selected files
+});
+
+
+// Event listeners for drag-and-drop functionality
+const dropArea = document.getElementById('drop-area');
+const fileElem = document.getElementById('fileElem');
+
+// Drag and drop events
+dropArea.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropArea.classList.add('hover');
+});
+
+dropArea.addEventListener('dragleave', () => {
+    dropArea.classList.remove('hover');
+});
+
+dropArea.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropArea.classList.remove('hover');
+    handleFiles(event.dataTransfer.files);  // Directly call handleFiles with the dropped files
+});
+
+// Handle file selection via the file input
+document.getElementById('fileSelect').addEventListener('click', () => {
+    fileElem.click();
+});
+
+fileElem.addEventListener('change', (event) => {
+    handleFiles(event.target.files);  // Directly call handleFiles with the selected files
+});
  
       </script>
   </body>
