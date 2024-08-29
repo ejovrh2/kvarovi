@@ -41,11 +41,11 @@ app.get('/', (req, res) => {
               <form method="post" action="/login">
                 <div class="form-group">
                   <label for="email">Email</label>
-                  <input type="email" class="form-control" id="email" name="email" value="Edi.Gljuscic@irb.hr" placeholder="Enter your email"  required>
+                  <input type="email" class="form-control" id="email" name="email"  placeholder="Enter your email"  required>
                 </div>
                 <div class="form-group">
                   <label for="password">Password</label>
-                  <input type="password" class="form-control" id="password" name="password" value="irbcim2024" placeholder="Enter your password" required>
+                  <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Login</button>
               </form>
