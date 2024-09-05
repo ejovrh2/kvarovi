@@ -1318,6 +1318,7 @@ let firstZoom = true;
             map.removeLayer(locationCircle);
             locationCircle = null;
         }
+             firstZoom = true;
     }
 
 
