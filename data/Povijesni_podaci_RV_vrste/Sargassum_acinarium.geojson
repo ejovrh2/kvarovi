@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "Sargassum_acinarium",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Broj postaje": 2, "Postaje": "Limski kanal ", "x": 45.133608, "y": 13.627969, "Epoha": "1990-2005", "Godina": 2003, "Mjeseci": "Au", "Sezone": "Su", "Autor": "Ive�a", "S. salicifolium": 1 }, "geometry": { "type": "Point", "coordinates": [ 13.627969, 45.133608 ] } },
+{ "type": "Feature", "properties": { "Broj postaje": 3, "Postaje": "Saline", "x": 45.118642, "y": 13.622022, "Epoha": "1990-2005", "Godina": 1999, "Mjeseci": null, "Sezone": null, "Autor": "Hanel", "S. salicifolium": 1 }, "geometry": { "type": "Point", "coordinates": [ 13.622022, 45.118642 ] } }
+]
+}

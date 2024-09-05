@@ -6,13 +6,16 @@ const axios = require('axios');
 const cors = require('cors');
 const cookieParser = require('cookie-parser'); // Import cookie-parser
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 // Middleware to enable CORS
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
+const dataDir = path.join(__dirname, 'data');
+app.use(express.static(dataDir));
+
 // Middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -41,11 +44,11 @@ app.get('/', (req, res) => {
               <form method="post" action="/login">
                 <div class="form-group">
                   <label for="email">Email</label>
-                  <input type="email" class="form-control" id="email" name="email"  placeholder="Enter your email"  required>
+                  <input type="email" class="form-control" id="email" name="email" value="hrvojelovrich@gmail.com"  placeholder="Enter your email"  required>
                 </div>
                 <div class="form-group">
                   <label for="password">Password</label>
-                  <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                  <input type="password" class="form-control" id="password" name="password" value="evalovric2023" placeholder="Enter your password" required>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Login</button>
               </form>
@@ -87,6 +90,30 @@ app.post('/login', async (req, res) => {
     res.redirect('/');
   }
 });
+
+app.get('/data', (req, res) => {
+    const geojsonFiles = [];
+
+    // Recursively read folders and files
+    function readDirRecursive(dir) {
+        const files = fs.readdirSync(dir);
+        files.forEach(file => {
+            const fullPath = path.join(dir, file);
+            if (fs.statSync(fullPath).isDirectory()) {
+                readDirRecursive(fullPath);
+            } else if (path.extname(fullPath) === '.geojson') {
+                // Save relative path to the file
+                geojsonFiles.push(path.relative(dataDir, fullPath));
+            }
+        });
+    }
+
+    readDirRecursive(dataDir);
+
+    res.json(geojsonFiles);
+});
+
+
 
 // Route to display maps (requires user to be logged in)
 app.get('/maps', async (req, res) => {
@@ -194,7 +221,6 @@ app.get('/maps', async (req, res) => {
         <div class="carousel-inner">
     `;
     
-    // Add carousel items with random Picsum Photos images
     projekti.forEach((element, index) => {
         const imageUrl = `https://picsum.photos/800/400?random=${index}`; // Random image with size 800x400
         popisProjekta += `
@@ -259,13 +285,17 @@ popisForma += `</div>`;
   <!DOCTYPE html>
   <html lang="en">
   <head>
-      <title>Leaflet Map with Sidebar</title>
+      <title>IRB-CIM</title>
   
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
       <meta charset="utf-8">
   
       <!-- Leaflet CSS and JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+ <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" crossorigin=""></script>
+
+
+
 <link
   rel="stylesheet"
   href="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css"
@@ -275,8 +305,9 @@ popisForma += `</div>`;
 
   
       <!-- Leaflet Sidebar V2 CSS and JS -->
-      <link rel="stylesheet" href="https://unpkg.com/leaflet-sidebar-v2@3.1.1/css/leaflet-sidebar.min.css">
-      <script src="https://unpkg.com/leaflet-sidebar-v2@3.1.1/js/leaflet-sidebar.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-sidebar-v2/css/leaflet-sidebar.min.css" />
+<script src="https://unpkg.com/leaflet-sidebar-v2/js/leaflet-sidebar.min.js"></script>
+
   
       <!-- Bootstrap CSS -->
       <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
@@ -300,6 +331,15 @@ popisForma += `</div>`;
 
 
 <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.js"></script>
+
+
+    <!-- Leaflet.markercluster CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+
+<!-- Leaflet.markercluster JavaScript -->
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
 
       <style>
           body {
@@ -373,17 +413,32 @@ popisForma += `</div>`;
                    <li><a href="#info" role="tab"><i class="fa fa-info"></i></a></li>
                     <li><a href="#setup" role="tab"><i class="fa fa-cog"></i></a></li>
             <li><a href="#upload" role="tab"><i class="fa fa-upload"></i></a></li>
-
+<li class="disabled"><a href="#database"  id="btnDatabase" role="tab">
+        <span class="fa-stack">
+            <i class="fa-solid fa-circle fa-stack-2x"></i> <!-- Background circle -->
+            <strong id="clusterCount" class="fa-stack-1x fa-inverse"></strong> <!-- Number in the center -->
+        </span>
+</a></li>
 
                     <li><a href="/logout" role="tab"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
               </ul>
           </div>
           <div class="leaflet-sidebar-content">
               <div class="leaflet-sidebar-pane" id="home">
-                  <h1 class="leaflet-sidebar-header"> ${displayName}</h1>
-                  <h4>Poštovani, ovdje su dostupni svi podaci koji su odobreni (eng.approved) unutar ODK Central servera na kojem se prikupljaju podaci iz pripremljenih formi.</h4>
-             <h4>Koristite isti username i password za editiranje podataka direktno na Central serveru dosupnom na adresi <a href="https://edc-central.xyz/" target="_blank">EDC central server</a> </h4>
-                  </div>
+                  <h1 class="leaflet-sidebar-header" style="font-family: 'Arial', sans-serif; font-size: 12px; line-height: 1.6; color: white;">Korisnik: ${displayName}</h1>
+    <h4 style="font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 15px;">
+        Poštovani, ovdje su dostupni svi podaci koji su odobreni (eng. approved) unutar ODK Central servera na kojem se prikupljaju podaci iz pripremljenih formi.
+    </h4>
+    <h4 style="font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 15px;">
+        Koristite isti username i password za editiranje podataka direktno na Central serveru dosupnom na adresi 
+        <a href="https://edc-central.xyz/" target="_blank" style="color: #007bff; text-decoration: none;">EDC central server</a>.
+    </h4>
+    <h4 style="font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 15px;">
+        Uz podatke prikupljenih preko forme, dostupni su i povijesni podaci koji se mogu preuzeti tako da se klikne na klaster/skup podataka. 
+    </h4>
+     <img src="download.gif" alt="Example GIF" 
+         style="width: 100%; max-width: 300px; margin-top: 20px; display: block; border-radius: 10px;">
+                      </div>
                <div class="leaflet-sidebar-pane sidebar" id="filter">
                   <h1 class="leaflet-sidebar-header">Fitriraj podatke na karti</h1>
 
@@ -396,13 +451,9 @@ popisForma += `</div>`;
               </div>
 
               <div class="leaflet-sidebar-pane" id="info">
-              <h1 class="leaflet-sidebar-header">Lista projekta i formi</h1>
-
-              
-              
+              <h1 class="leaflet-sidebar-header">Lista projekta i formi</h1>       
                     ${popisProjekta} 
                     ${popisForma} 
-                  
               </div>
 
         <div class="leaflet-sidebar-pane" id="setup">
@@ -440,7 +491,13 @@ popisForma += `</div>`;
     <p id="upload-status" class="mt-3"></p>
 </div>
 
-
+              <div class="leaflet-sidebar-pane sidebar" id="database">
+                  <h1 class="leaflet-sidebar-header">Pregled povijesnih podataka</h1>
+                  <p id="infoTextFilter">Odaberi sloj koji želiš filtrirati</p>
+      <div id="layerListContainer">
+            
+        </div>
+              </div>
         </div>
       </div>
       <script>
@@ -459,13 +516,15 @@ popisForma += `</div>`;
              var lyrDOF = new L.TileLayer.WMS('https://geoportal.dgu.hr/services/dof/wms', {
       layers: 'DOF5_2011',
       format: 'image/png',
+layerName:'DOF2011',
       transparent: true,
       version: '1.3.0',
       attribution: '© <a href="https://dgu.gov.hr/" target="_blank">Državna geodetska uprava</a>'
       //crs: crs,
       //crs: L.CRS.EPSG3765
     });
-        lyrOSM = L.tileLayer.provider('OpenStreetMap.Mapnik').addTo(map);
+        lyrOSM = L.tileLayer.provider('OpenStreetMap.Mapnik',{
+        layerName:'OSM'}).addTo(map);
 
 
                   objBasemaps = {
@@ -478,9 +537,31 @@ popisForma += `</div>`;
          
         };
 
+
         ctlLayers = L.control.layers(objBasemaps, objOverlays).addTo(map);
 
+       var sidebar = L.control.sidebar( {
+         container: 'sidebar',
+            position: 'left',
+             autopan:true
+        }).addTo(map);
 
+        var obalna_linija
+         fetch('obalna_linija_coastline.geojson') // Replace with your GeoJSON URL or local path
+            .then(response => response.json())
+            .then(data => {
+                // Add the GeoJSON layer to the map
+                 obalna_linija=L.geoJSON(data, {
+                    style: {
+                        "color": "#ff7800",
+                        "weight": 5,
+                        "opacity": 0.65
+                    }
+                });
+                            ctlLayers.addOverlay(obalna_linija, "Obalna linija");
+
+            })
+            .catch(error => console.error('Error fetching the GeoJSON:', error));
 
         let zoomControl;
 
@@ -573,6 +654,7 @@ map.pm.addControls(options);
                 style: function (feature) {
                     return { color: 'blue' };
                 },
+               layerName:'CARLIT_V2',
                 onEachFeature: function (feature, layer) {
                     layer.on('click', function () {
                         var properties = feature.properties;
@@ -603,12 +685,9 @@ map.pm.addControls(options);
         });
       
 
-        const sidebar = L.control.sidebar('sidebar', {
-            position: 'left',
-             closeButton: true, 
-        }).addTo(map);
+ 
 
-            ctlLayers.addOverlay(geojsonLayer, "CARLIT_V2");
+            ctlLayers.addOverlay(geojsonLayer, "Carlit_v2");
 
                  if (filteredFeatures.length > 0) {
         const bounds = L.geoJSON({ type: 'FeatureCollection', features: filteredFeatures }).getBounds();
@@ -779,7 +858,7 @@ function handleButtonClick(attribute, value, clickedButton) {
 
 document.getElementById('downloadBtn').addEventListener('click', () => {
     // Convert filtered GeoJSON data to a Blob and trigger download
-   //sidebar.close();
+   
     downloadFilteredData();
 });
 
@@ -887,6 +966,8 @@ function addGeoJSONUploadLayer(geojson) {
     uploadedGeojson = L.geoJson(geojson, {
         onEachFeature: function (feature, layer) {
             layer.on('click', function () {
+             //L.DomEvent.stopPropagation(e);
+
                 var properties = feature.properties;
                 var popupContent = "<ul>";
                 for (var key in properties) {
@@ -952,7 +1033,194 @@ fileElem.addEventListener('change', (event) => {
     handleFiles(event.target.files);  // Directly call handleFiles with the selected files
 });
  
+//__________
+
+
+
+var geojsonMarkerOptions = {
+    radius: 5,
+    fillColor:getRandomColor(),
+    color: getRandomColor(),
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.8
+};
+
+
+
+let currentClusteredData = null; // Globalna varijabla za čuvanje podataka trenutnog klastera
+
+fetch('/data')
+    .then(response => response.json())
+    .then(files => {
+        files.forEach(file => {
+            fetch(file)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.features.length > 0) {
+                        const geometryType = data.features[0].geometry.type;
+                        const layerName = file.split('/').pop().split('.geojson')[0];
+
+                        // Handle Point geometries
+                        if (geometryType === "Point") {
+                            // Generate a random color for this layer
+                            const randomColor = getRandomColor();
+
+                            const markers = L.markerClusterGroup();
+
+                            // Set geojsonMarkerOptions with the random color
+                            const geojsonMarkerOptions = {
+                                radius: 14,
+                                fillColor: randomColor,
+                                color: "#000",
+                                weight: 1,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            };
+
+                            const vanjski = L.geoJSON(data, {
+                                layerName: layerName,
+                                pointToLayer: function (feature, latlng) {
+                                    // Kreiranje CircleMarker i dodavanje originalnog feature-a kao deo marker objekta
+                                    const marker = L.circleMarker(latlng, geojsonMarkerOptions);
+                                    marker.feature = feature; // Čuvanje feature objekta u markeru
+                                    return marker;
+                                },
+                                onEachFeature: function (feature, layer) {
+                                    layer.on('click', function (e) {
+                                    console.log(e)
+                                    	L.DomEvent.stopPropagation(e);
+
+                                        var properties = feature.properties;
+                                        var popupContent = "<ul>";
+                                        for (var key in properties) {
+                                            if (properties.hasOwnProperty(key)) {
+                                                popupContent += "<li><strong>" + key + ":</strong> " + properties[key] + "</li>";
+                                            }
+                                        }
+                                        popupContent += "</ul>";
+                                        layer.bindPopup(popupContent).openPopup();
+                                    });
+                                }
+                            });
+
+                            // Dodaj geojson sloj u marker cluster grupu
+                            markers.addLayer(vanjski);
+
+                
+                            // Dodaj događaj za klik na cluster
+                            markers.on('clusterclick', function (a) {
+
+                                const clusteredFeatures = [];
+                                var number=a.sourceTarget._childCount
+                                const clusterCount = document.getElementById('clusterCount');
+                                clusterCount.textContent = number; // Update the number in the icon stack
+
+                                 clusterCount.classList.add('fa-beat-fade');
+                                 
+                               // Pronađi element sa ID-jem 'btnDatabase'
+                            var btnDatabase = document.getElementById('btnDatabase');
+
+                            // Pronađi roditelja tog elementa (koji je <li> element)
+                            var parentLi = btnDatabase.parentElement;
+
+                            // Ukloni klasu 'disabled' sa <li> elementa
+                            parentLi.classList.remove('disabled');
+                                a.layer.getAllChildMarkers().forEach(function (marker) {
+                                    if (marker.feature) {
+                                        clusteredFeatures.push(marker.feature);
+                                    }
+                                });
+
+                                // Sačuvaj podatke o trenutnom klasteru u globalnu varijablu
+                                currentClusteredData = {
+                                    type: "FeatureCollection",
+                                    features: clusteredFeatures
+                                };
+
+                                // downloadGeoJSON(currentClusteredData);
+                            });
+
+                            // Dodaj marker cluster grupu na mapu
+                            ctlLayers.addOverlay(markers, layerName);
+                        }
+                    }
+                })
+                .catch(error => console.error('Error loading GeoJSON:', error));
+        });
+    })
+    .catch(error => console.error('Error fetching GeoJSON file list:', error));
+
+
+
+
+    map.on('click', function (e) {
+
+     // Pronađi element sa ID-jem 'btnDatabase'
+var btnDatabase = document.getElementById('btnDatabase');
+
+// Pronađi roditelja tog elementa (koji je <li> element)
+var parentLi = btnDatabase.parentElement;
+
+// Dodaj klasu 'disabled' na <li> element
+parentLi.classList.add('disabled');
+
+
+ const clusterCount = document.getElementById('clusterCount');
+    clusterCount.textContent = ''; // Clear the number
+currentClusteredData = null;
+});
+
+// Function to generate a random color in hex format
+function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
+// Function to download data as GeoJSON
+function downloadGeoJSON(geojson) {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(geojson));
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', dataStr);
+    a.setAttribute('download', 'cluster_data.geojson');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Pronađi element sa ID-jem 'btnDatabase'
+var btnDatabase = document.getElementById('btnDatabase');
+
+// Pronađi roditelja tog elementa (koji je <li> element)
+var parentLi = btnDatabase.parentElement;
+
+// Dodaj klasu 'disabled' na <li> element
+parentLi.classList.add('disabled');
+}
+
+// Dodavanje događaja na dugme za preuzimanje
+document.getElementById('btnDatabase').addEventListener('click', function (e) {
+    e.preventDefault(); // Sprečavanje defaultnog ponašanja
+sidebar.close('database')
+
+
+    // Provjeri je li sačuvan neki klaster
+    if (currentClusteredData) {
+   
+        downloadGeoJSON(currentClusteredData);
+
+    } else {
+        alert('Nema odabranog klastera za preuzimanje.');
+    }
+});
+
+
       </script>
+
   </body>
   </html>
   `;
@@ -975,6 +1243,8 @@ app.get('/logout', (req, res) => {
   }
   res.redirect('/');
 });
+
+
 
 // Start server
 app.listen(PORT, () => {

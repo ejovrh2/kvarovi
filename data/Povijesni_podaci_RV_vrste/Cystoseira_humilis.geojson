@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "Cystoseira_humilis",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Broj postaje": 17, "Postaje": "�karaba", "x": 45.064152, "y": 13.638677, "Epoha": "1950-1990", "Godina": "1978-1983", "Mjeseci": "A", "Sezone": "Sp", "Autor": "Munda", "C. humilis": 1 }, "geometry": { "type": "Point", "coordinates": [ 13.638677, 45.064152 ] } },
+{ "type": "Feature", "properties": { "Broj postaje": 22, "Postaje": "Palu", "x": 45.024808, "y": 13.702242, "Epoha": "1950-1990", "Godina": "1978-1983", "Mjeseci": "A", "Sezone": "Sp", "Autor": "Munda", "C. humilis": 1 }, "geometry": { "type": "Point", "coordinates": [ 13.702242, 45.024808 ] } }
+]
+}
