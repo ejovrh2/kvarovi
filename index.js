@@ -563,6 +563,35 @@ layerName:'DOF2011',
             })
             .catch(error => console.error('Error fetching the GeoJSON:', error));
 
+            var obala_poligon
+            fetch('obalna_linija_fixed.geojson')
+    .then(response => response.json())
+    .then(data => {
+       obala_poligon= L.geoJSON(data, {
+            style: {
+                color: "#3388ff",
+                weight: 2,
+                fillColor: "#3388ff",
+                fillOpacity: 0.5
+            },
+                   onEachFeature: function (feature, layer) {
+                    layer.on('click', function () {
+                        var properties = feature.properties;
+                        var popupContent = "<ul>";
+                        for (var key in properties) {
+                            if (properties.hasOwnProperty(key)) {
+                                popupContent += "<li><strong>" + key + ":</strong> " + properties[key] + "</li>";
+                            }
+                        }
+                        popupContent += "</ul>";
+                        layer.bindPopup(popupContent).openPopup();
+                    });
+                }
+        });
+        ctlLayers.addOverlay(obala_poligon, "Obala fixed");
+
+    });
+
         let zoomControl;
 
     // Initial state: No zoom controls (as per your requirement)
