@@ -412,15 +412,18 @@ popisForma += `</div>`;
                   <li><a id="downloadBtn" href="#download" role="tab"><i class="fa-solid fa-download"></i></a></li>
                    <li><a href="#info" role="tab"><i class="fa fa-info"></i></a></li>
                     <li><a href="#setup" role="tab"><i class="fa fa-cog"></i></a></li>
-            <li><a href="#upload" role="tab"><i class="fa fa-upload"></i></a></li>
-<li class="disabled"><a href="#database"  id="btnDatabase" role="tab">
+                    <li><a href="#upload" role="tab"><i class="fa fa-upload"></i></a></li>
+                    <li class="disabled"><a href="#database"  id="btnDatabase" role="tab">
         <span class="fa-stack">
             <i class="fa-solid fa-circle fa-stack-2x"></i> <!-- Background circle -->
             <strong id="clusterCount" class="fa-stack-1x fa-inverse"></strong> <!-- Number in the center -->
         </span>
 </a></li>
+<li><a id="gps" href="#gps" role="tab"><i class="fa-regular fa-compass"></i></a>
+</li>
 
-                    <li><a href="/logout" role="tab"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
+
+            <li><a href="/logout" role="tab"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
               </ul>
           </div>
           <div class="leaflet-sidebar-content">
@@ -1247,7 +1250,103 @@ sidebar.close('database')
     }
 });
 
+//_____________gps__________________________
 
+    let locationPoint, locationCircle;
+let firstZoom = true;
+    // Function to handle geolocation
+    function handleGeolocation(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy; // Accuracy in meters
+
+        if (!isSolid) return; // If the button is off, do nothing
+
+        // Remove existing point and circle if they exist
+        if (locationPoint) {
+            map.removeLayer(locationPoint);
+        }
+        if (locationCircle) {
+            map.removeLayer(locationCircle);
+        }
+
+        // Create a point at the user's location
+        locationPoint = L.circleMarker([lat, lng], {
+            radius: 5,
+            color: '#007bff', // Point color
+            fillColor: '#007bff',
+            fillOpacity: 1
+        }).addTo(map);
+
+        // Create a circle around the point based on accuracy
+        locationCircle = L.circle([lat, lng], {
+            radius: accuracy, // Use the accuracy value for the circle radius
+            color: '#007bff', // Circle color
+            fillColor: '#007bff',
+            fillOpacity: 0.2
+        }).addTo(map);
+
+        if (firstZoom) {
+            map.setView([lat, lng], 15, { animate: true });
+            firstZoom = false; // Set flag to false after the first zoom
+        } else {
+            map.setView(map.getCenter(), map.getZoom(), { animate: false });
+        }
+    }
+
+    // Function to start geolocation tracking
+    function startGeolocation() {
+        if (navigator.geolocation) {
+        console.log(navigator.geolocation.watchPosition)
+            navigator.geolocation.watchPosition(handleGeolocation, (error) => {
+                console.error('Error getting location:', error);
+            }, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 5000
+            });
+        } else {
+            alert('Geolocation is not supported by this browser.');
+        }
+    }
+   function stopGeolocation() {
+        if (locationPoint) {
+            map.removeLayer(locationPoint);
+            locationPoint = null;
+        }
+        if (locationCircle) {
+            map.removeLayer(locationCircle);
+            locationCircle = null;
+        }
+    }
+
+
+
+
+  let isSolid = false;
+document.getElementById('gps').addEventListener('click', function (e) {
+sidebar.close('gps')
+
+    const icon = this.querySelector('i');
+        if (isSolid) {
+       stopGeolocation();
+            // Change icon to fa-regular
+            icon.classList.remove('fa-solid', 'fa-compass');
+            icon.classList.add('fa-regular', 'fa-compass');
+        } else {
+          startGeolocation();
+            // Change icon to fa-solid
+            icon.classList.remove('fa-regular', 'fa-compass');
+            icon.classList.add('fa-solid', 'fa-compass');
+        }
+
+        // Update the state
+        isSolid = !isSolid;
+
+
+map.setView(map.getCenter(), map.getZoom(), { animate: false });
+
+})
       </script>
 
   </body>
