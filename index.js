@@ -703,7 +703,7 @@ map.pm.addControls(options);
             filteredFeatures = [...originalFeatures];
             geojsonLayer = L.geoJSON({ type: 'FeatureCollection', features: filteredFeatures }, {
                 style: function (feature) {
-                    return { color: 'blue' };
+                    return { color: 'blue',weight: 4 };
                 },
                layerName:'CARLIT_V2',
                 onEachFeature: function (feature, layer) {
@@ -720,6 +720,19 @@ map.pm.addControls(options);
                         layer.bindPopup(popupContent).openPopup();
 
                     });
+
+                                // On hover (mouseover) event to change color
+            layer.on('mouseover', function () {
+                layer.setStyle({
+                    color: 'red',   // Change color on hover
+                    weight: 6       // Optional: make it bolder on hover
+                });
+            });
+
+            // On hover out (mouseout) event to reset to default style
+            layer.on('mouseout', function () {
+                geojsonLayer.resetStyle(layer); // Reset to the default style
+            });
                 }
             }).addTo(map);
 
