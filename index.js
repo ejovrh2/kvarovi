@@ -354,6 +354,25 @@ popisForma += `</div>`;
               #sidebar{
               opacity:0.8;
               }
+
+                  /* Ensure the sidebar content area scrolls if it's too tall */
+    .leaflet-sidebar-content {
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    /* Make sure the sidebar header and other content styles fit well */
+    .leaflet-sidebar-pane {
+        padding: 15px; /* Adjust padding as needed */
+        box-sizing: border-box; /* Include padding in the element's total width and height */
+    }
+
+    /* For better mobile experience, you might want to set a max-height */
+    @media (max-width: 767px) {
+        .leaflet-sidebar-content {
+            max-height: 100vh; /* Ensure it does not exceed the viewport height */
+        }
+    }
   
           .lorem {
               font-style: italic;
@@ -689,6 +708,7 @@ map.pm.addControls(options);
                layerName:'CARLIT_V2',
                 onEachFeature: function (feature, layer) {
                     layer.on('click', function () {
+                    L.DomEvent.stopPropagation(e);
                         var properties = feature.properties;
                         var popupContent = "<ul>";
                         for (var key in properties) {
