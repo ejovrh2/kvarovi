@@ -707,8 +707,8 @@ map.pm.addControls(options);
                 },
                layerName:'CARLIT_V2',
                 onEachFeature: function (feature, layer) {
-                    layer.on('click', function () {
-                    L.DomEvent.stopPropagation(e);
+                    layer.on('click', function (e) {
+                        L.DomEvent.stopPropagation(e);
                         var properties = feature.properties;
                         var popupContent = "<ul>";
                         for (var key in properties) {
@@ -718,6 +718,7 @@ map.pm.addControls(options);
                         }
                         popupContent += "</ul>";
                         layer.bindPopup(popupContent).openPopup();
+
                     });
                 }
             }).addTo(map);
