@@ -1201,11 +1201,7 @@ fetch('/data')
                                 // downloadGeoJSON(currentClusteredData);
                             });
 
-                            // Dodaj marker cluster grupu na mapu
-                          
-                            let cleanedName = layerName.replace(/\\.*$/, '');
-                            console.log(cleanedName); 
-                            ctlLayers.addOverlay(markers, cleanedName);
+                            ctlLayers.addOverlay(markers, layerName.toString());
                         }
                     }
                 })
