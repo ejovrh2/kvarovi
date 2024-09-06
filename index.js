@@ -226,9 +226,9 @@ app.get('/maps', async (req, res) => {
         popisProjekta += `
             <div class="carousel-item${index === 0 ? ' active' : ''}">
                 <img class="d-block w-100" src="${imageUrl}" alt="${element.name}">
-                <div class="carousel-caption d-none d-md-block" style=" color: white; font-weight: bold; text-shadow: 1px 1px 2px black;font-family: cursive;">
-                    <h5>${element.name}</h5>
-                </div>
+               <div class="carousel-caption" style="color: white; font-weight: bold; text-shadow: 1px 1px 2px black; font-family: cursive;">
+    <h5>${element.name}</h5>
+</div>
             </div>
         `;
     });
@@ -447,7 +447,7 @@ popisForma += `</div>`;
           </div>
           <div class="leaflet-sidebar-content">
               <div class="leaflet-sidebar-pane" id="home">
-                  <h1 class="leaflet-sidebar-header" style="font-family: 'Arial', sans-serif; font-size: 12px; line-height: 1.6; color: white;">Korisnik: ${displayName}</h1>
+            <h1 class="leaflet-sidebar-header" style="font-family: 'Arial', sans-serif; font-size: 12px; line-height: 1.6; color: white;">Korisnik: ${displayName}</h1>
     <h4 style="font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 15px;">
         Poštovani, ovdje su dostupni svi podaci koji su odobreni (eng. approved) unutar ODK Central servera na kojem se prikupljaju podaci iz pripremljenih formi.
     </h4>
