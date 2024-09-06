@@ -323,12 +323,6 @@ popisForma += `</div>`;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.13.0/leaflet-providers.js" integrity="sha512-pb9UiEEi2JIxkMloqYnqgONe9CTcp2BWWq1Hbz60l7f3R3VhZ57dEE58Ritf/HgBw3o/5Scf5gg0T9V+tf48fg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 
-<!-- Include Leaflet Browser Print CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet.browser.print/dist/leaflet.browser.print.min.css" />
-
-<!-- Include Leaflet Browser Print JS -->
-<script src="https://unpkg.com/leaflet.browser.print/dist/leaflet.browser.print.min.js"></script>
-
 
 <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.js"></script>
 
@@ -535,10 +529,10 @@ popisForma += `</div>`;
             
 
 
-             var lyrDOF = new L.TileLayer.WMS('https://geoportal.dgu.hr/services/dof/wms', {
+    var lyrDOF = new L.TileLayer.WMS('https://geoportal.dgu.hr/services/dof/wms', {
       layers: 'DOF5_2011',
       format: 'image/png',
-layerName:'DOF2011',
+    layerName:'DOF2011',
       transparent: true,
       version: '1.3.0',
       attribution: '© <a href="https://dgu.gov.hr/" target="_blank">Državna geodetska uprava</a>'
@@ -983,8 +977,8 @@ function handleFiles(files) {
             console.log('File content:', fileContentJSON);  // Log file content
 
             try {
-                const geojson2 = fileContentJSON
-;
+                const geojson2 = fileContentJSON;
+
                 if (isValidGeoJSON(geojson2)) {
                     
                     addGeoJSONUploadLayer(geojson2);  // Use the function to add the layer
@@ -1208,7 +1202,10 @@ fetch('/data')
                             });
 
                             // Dodaj marker cluster grupu na mapu
-                            ctlLayers.addOverlay(markers, layerName);
+                          
+                            let cleanedName = layerName.replace(/\\.*$/, '');
+                            console.log(cleanedName); 
+                            ctlLayers.addOverlay(markers, cleanedName);
                         }
                     }
                 })
