@@ -334,6 +334,8 @@ popisForma += `</div>`;
 <!-- Leaflet.markercluster JavaScript -->
 <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet.browser.print/dist/leaflet.browser.print.min.css" />
+<script src="https://unpkg.com/leaflet.browser.print/dist/leaflet.browser.print.min.js"></script>
 
       <style>
           body {
@@ -432,6 +434,7 @@ popisForma += `</div>`;
             <strong id="clusterCount" class="fa-stack-1x fa-inverse"></strong> <!-- Number in the center -->
         </span>
 </a></li>
+ <li><a id="print" href="#print" role="tab"><i class="fa-regular fa-map"></i></a></li>
 <li><a id="gps" href="#gps" role="tab"><i class="fa-regular fa-compass"></i></a>
 </li>
 
@@ -457,8 +460,11 @@ popisForma += `</div>`;
                       </div>
                <div class="leaflet-sidebar-pane sidebar" id="filter">
                   <h1 class="leaflet-sidebar-header">Fitriraj podatke na karti</h1>
-
               </div>
+
+
+
+
 
                <div class="leaflet-sidebar-pane" id="download">
                   <h1 class="leaflet-sidebar-header"> ${displayName}</h1>
@@ -519,7 +525,7 @@ popisForma += `</div>`;
       <script>
 
 
-             let geojsonLayer;
+        let geojsonLayer;
         let originalFeatures = [];
         let filteredFeatures = [];
         let activeFilters = {};
@@ -554,6 +560,7 @@ popisForma += `</div>`;
         };
 
 
+
         ctlLayers = L.control.layers(objBasemaps, objOverlays).addTo(map);
 
        var sidebar = L.control.sidebar( {
@@ -579,33 +586,58 @@ popisForma += `</div>`;
             })
             .catch(error => console.error('Error fetching the GeoJSON:', error));
 
-            var obala_poligon
-            fetch('obalna_linija_fixed.geojson')
+        var obala_poligon;
+fetch('obalna_linija_fixed.geojson')
     .then(response => response.json())
     .then(data => {
-       obala_poligon= L.geoJSON(data, {
+        obala_poligon = L.geoJSON(data, {
             style: {
                 color: "#3388ff",
-                weight: 2,
+                weight: 6,
                 fillColor: "#3388ff",
                 fillOpacity: 0.5
             },
-                   onEachFeature: function (feature, layer) {
-                    layer.on('click', function () {
-                        var properties = feature.properties;
-                        var popupContent = "<ul>";
-                        for (var key in properties) {
-                            if (properties.hasOwnProperty(key)) {
-                                popupContent += "<li><strong>" + key + ":</strong> " + properties[key] + "</li>";
-                            }
-                        }
-                        popupContent += "</ul>";
-                        layer.bindPopup(popupContent).openPopup();
-                    });
-                }
-        });
-        ctlLayers.addOverlay(obala_poligon, "Obala fixed");
+            onEachFeature: function (feature, layer) {
+                // Store the default style
+                var defaultStyle = {
+                    color: "#3388ff",
+                    weight: 6,
+                    fillColor: "#3388ff",
+                    fillOpacity: 0.5
+                };
 
+                // Define hover style
+                var hoverStyle = {
+                    color: "#ff7800",
+                    weight: 3,
+                    fillColor: "#ff7800",
+                    fillOpacity: 0.7
+                };
+
+                layer.on('click', function () {
+                    var properties = feature.properties;
+                    var popupContent = "<ul>";
+                    for (var key in properties) {
+                        if (properties.hasOwnProperty(key)) {
+                            popupContent += "<li><strong>" + key + ":</strong> " + properties[key] + "</li>";
+                        }
+                    }
+                    popupContent += "</ul>";
+                    layer.bindPopup(popupContent).openPopup();
+                });
+
+                // Add mouseover and mouseout events
+                layer.on('mouseover', function () {
+                    layer.setStyle(hoverStyle);
+                });
+
+                layer.on('mouseout', function () {
+                    layer.setStyle(defaultStyle); // Reset to default style
+                });
+            }
+        });
+
+        ctlLayers.addOverlay(obala_poligon, "Obala fixed");
     });
 
         let zoomControl;
@@ -1375,6 +1407,44 @@ sidebar.close('gps')
 map.setView(map.getCenter(), map.getZoom(), { animate: false });
 
 })
+
+
+
+let isSolidPrint = true; // Initial state
+var browserControl
+document.getElementById('print').addEventListener('click', function (e) {
+    sidebar.close('print');
+
+    const icon2 = this.querySelector('i'); // Find the <i> element inside the button
+
+    // Check if icon exists
+    if (icon2) {
+        if (isSolidPrint) {
+       
+            // Change icon to fa-regular
+            icon2.classList.remove('fa-regular', 'fa-map');
+            icon2.classList.add('fa-solid', 'fa-map'); // Change to new icon
+             browserControl = L.control.browserPrint({
+            position:'topright'
+            }).addTo(map);
+
+           
+        } else {
+            // Change icon to fa-duotone fa-solid
+            icon2.classList.remove('fa-solid', 'fa-map');
+            icon2.classList.add('fa-regular', 'fa-map'); // Revert to default
+            map.removeControl(browserControl);
+
+        }
+        // Update the state
+        isSolidPrint = !isSolidPrint;
+    }
+
+     map.setView(map.getCenter(), map.getZoom(), { animate: false });
+});
+
+
+
       </script>
 
   </body>
