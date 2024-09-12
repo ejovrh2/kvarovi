@@ -337,6 +337,8 @@ popisForma += `</div>`;
 <link rel="stylesheet" href="https://unpkg.com/leaflet.browser.print/dist/leaflet.browser.print.min.css" />
 <script src="https://unpkg.com/leaflet.browser.print/dist/leaflet.browser.print.min.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+
       <style>
           body {
               padding: 0;
@@ -580,8 +582,8 @@ popisForma += `</div>`;
                         "weight": 5,
                         "opacity": 0.65
                     }
-                });
-                            ctlLayers.addOverlay(obalna_linija, "Obalna linija");
+                }).addTo(map);
+                ctlLayers.addOverlay(obalna_linija, "Obalna linija");
 
             })
             .catch(error => console.error('Error fetching the GeoJSON:', error));
@@ -724,34 +726,107 @@ map.pm.addControls(options);
     // Listen for the toggle change event
     drawControlToggle.addEventListener('change', updatedrawControls);
 
-        function addGeoJSONLayer(data) {
-            originalFeatures = data.features;
-            filteredFeatures = [...originalFeatures];
-            geojsonLayer = L.geoJSON({ type: 'FeatureCollection', features: filteredFeatures }, {
-                style: function (feature) {
-                    return { color: 'blue',weight: 4 };
-                },
-               layerName:'CARLIT_V2',
-                onEachFeature: function (feature, layer) {
-                    layer.on('click', function (e) {
-                        L.DomEvent.stopPropagation(e);
-                        var properties = feature.properties;
-                        var popupContent = "<ul>";
-                        for (var key in properties) {
-                            if (properties.hasOwnProperty(key)) {
-                                popupContent += "<li><strong>" + key + ":</strong> " + properties[key] + "</li>";
-                            }
-                        }
-                        popupContent += "</ul>";
-                        layer.bindPopup(popupContent).openPopup();
+function addGeoJSONLayer(data) {
+    originalFeatures = data.features;
+    filteredFeatures = [...originalFeatures];
+    geojsonLayer = L.geoJSON({ type: 'FeatureCollection', features: filteredFeatures }, {
+        style: function (feature) {
+            return { color: 'blue', weight: 4 };
+        },
+        layerName: 'CARLIT_V2',
+        onEachFeature: function (feature, layer) {
+            layer.on('click', function (e) {
+                L.DomEvent.stopPropagation(e);
+                var properties = feature.properties;
+                var popupContent = "<ul>";
 
-                    });
+                // Loop through properties for the popup
+                for (var key in properties) {
+                    if (properties.hasOwnProperty(key)) {
+                        popupContent += "<li><strong>" + key + ":</strong> " + properties[key] + "</li>";
+                    }
+                }
+                // Check if the feature is a LineString and calculate the length using Turf.js
+                if (feature.geometry.type === 'LineString') {
+                    // Calculate the length of the clicked LineString feature
+                    var lineString = turf.lineString(feature.geometry.coordinates);
+                    var length = turf.length(lineString, { units: 'kilometers' });
+                    popupContent += "<li><strong>Dužina:</strong> " + length.toFixed(2) + " km</li>";
 
-                                // On hover (mouseover) event to change color
+                //     // Get the coordinates of the coastline from its layer on the map
+                //     var coastlineFeatures = obalna_linija.toGeoJSON().features;
+
+                //     // Initialize variables to track the shortest distance and points
+                //     var shortestDistance = Infinity;
+                //     var closestPointOnLine = null;
+                //     var closestPointOnCoastline = null;
+
+                //     // Iterate over each vertex of the clicked LineString
+                //     feature.geometry.coordinates.forEach(function (vertex) {
+                //         var point = turf.point(vertex);
+
+                //         coastlineFeatures.forEach(function (coastlineFeature) {
+                //         console.log(coastlineFeature)
+                //             if (coastlineFeature.geometry.type === 'MultiLineString') {
+                            
+                //                 var nearestPointOnCoastline = turf.nearestPointOnLine(coastlineFeature, point);
+
+                //                 // Calculate the distance between the vertex and the nearest point on the coastline
+                //                 var distance = turf.distance(point, nearestPointOnCoastline, { units: 'meters' });
+
+                //                 if (distance < shortestDistance) {
+                //                     shortestDistance = distance;
+                //                     closestPointOnLine = vertex;
+                //                     closestPointOnCoastline = nearestPointOnCoastline.geometry.coordinates;
+                //                 }
+                //             }
+                //         });
+                //     });
+
+                //     // Display the shortest distance
+                //     popupContent += "<li><strong>Shortest distance to coastline:</strong> " + shortestDistance.toFixed(2) + " m</li>";
+
+                //     // Null checks before using coordinates for nearest points
+                //     if (closestPointOnLine && closestPointOnCoastline) {
+                //         // Plot the vertex on the clicked line
+                //         var vertexMarker = L.circleMarker([closestPointOnLine[1], closestPointOnLine[0]], {
+                //             radius: 5,
+                //             color: 'blue',
+                //             fillColor: 'blue',
+                //             fillOpacity: 0.8
+                //         }).addTo(map).bindPopup("Vertex on Clicked Line").openPopup();
+
+                //         // Plot the nearest point on the coastline
+                //         var nearestPointMarker = L.circleMarker([closestPointOnCoastline[1], closestPointOnCoastline[0]], {
+                //             radius: 5,
+                //             color: 'green',
+                //             fillColor: 'green',
+                //             fillOpacity: 0.8
+                //         }).addTo(map).bindPopup("Nearest Point on Coastline").openPopup();
+
+                //         // Draw a line between the nearest points
+                //         var distanceLine = L.polyline([
+                //             [closestPointOnLine[1], closestPointOnLine[0]],  // Vertex point
+                //             [closestPointOnCoastline[1], closestPointOnCoastline[0]] // Nearest point on coastline
+                //         ], {
+                //             color: 'orange',
+                //             weight: 2,
+                //             dashArray: '5,5'
+                //         }).addTo(map);
+                //     } else {
+                //         console.warn("Could not calculate nearest points. Nearest coordinates are null.");
+                //     }
+                 }
+
+                popupContent += "</ul>";
+                layer.bindPopup(popupContent).openPopup();
+            });
+
+            // On hover (mouseover) event to change color
             layer.on('mouseover', function () {
                 layer.setStyle({
-                    color: 'red',   // Change color on hover
-                    weight: 6       // Optional: make it bolder on hover
+                    color: 'red', // Change color on hover
+                    weight: 6     // Optional: make it bolder on hover
                 });
             });
 
@@ -759,9 +834,8 @@ map.pm.addControls(options);
             layer.on('mouseout', function () {
                 geojsonLayer.resetStyle(layer); // Reset to the default style
             });
-                }
-            }).addTo(map);
-
+        }
+    }).addTo(map);
 
         // Example event listener
         map.on('pm:create', (e) => {
@@ -1271,6 +1345,9 @@ function getRandomColor() {
     }
     return color;
 }
+
+
+
 
 // Function to download data as GeoJSON
 function downloadGeoJSON(geojson) {
