@@ -69,7 +69,7 @@ app.post('/login', async (req, res) => {
 
   try {
     // Make a request to the login endpoint
-    const response = await axios.post('https://edc-central.xyz/v1/sessions', {
+    const response = await axios.post('https://irb-cim.xyz/v1/sessions', {
       email,
       password
     });
@@ -123,25 +123,25 @@ app.get('/maps', async (req, res) => {
   try {
     // Make multiple API calls with Authorization headers
     const [podaci, listaProjekata, listaFormi, currentUser] = await Promise.all([
-      axios.get('https://edc-central.xyz/v1/projects/2/forms/CARLIT_v2.svc/Submissions?', {
+      axios.get('https://irb-cim.xyz/v1/projects/2/forms/CARLIT_v2.svc/Submissions?', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type':'application/json'
         }
       }),
-      axios.get('https://edc-central.xyz/v1/projects', {
+      axios.get('https://irb-cim.xyz/v1/projects', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type':'application/json'
         }
       }),
-      axios.get('https://edc-central.xyz/v1/projects/2/forms', {
+      axios.get('https://irb-cim.xyz/v1/projects/2/forms', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type':'application/json'
         }
       }),
-      axios.get('https://edc-central.xyz/v1/users/current', {
+      axios.get('https://irb-cim.xyz/v1/users/current', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type':'application/json'
@@ -426,6 +426,7 @@ popisForma += `</div>`;
               <ul role="tablist">
                   <li><a href="#home" role="tab"><i class="fa fa-home"></i></a></li>
                   <li><a href="#filter" role="tab"><i class="fa-solid fa-filter"></i></a></li>
+                  <li><a href="#advancedFilter" id="advanceFilterBtn" onclick="checkActiveLayers()" role="tab"><i class="fa-solid fa-clock-rotate-left"></i></a></li>
                   <li><a id="downloadBtn" href="#download" role="tab"><i class="fa-solid fa-download"></i></a></li>
                    <li><a href="#info" role="tab"><i class="fa fa-info"></i></a></li>
                     <li><a href="#setup" role="tab"><i class="fa fa-cog"></i></a></li>
@@ -452,7 +453,7 @@ popisForma += `</div>`;
     </h4>
     <h4 style="font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 15px;">
         Koristite isti username i password za editiranje podataka direktno na Central serveru dosupnom na adresi 
-        <a href="https://edc-central.xyz/" target="_blank" style="color: #007bff; text-decoration: none;">EDC central server</a>.
+        <a href="https://irb-cim.xyz/" target="_blank" style="color: #007bff; text-decoration: none;">EDC central server</a>.
     </h4>
     <h4 style="font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 15px;">
         Uz podatke prikupljenih preko forme, dostupni su i povijesni podaci koji se mogu preuzeti tako da se klikne na klaster/skup podataka. 
@@ -460,12 +461,11 @@ popisForma += `</div>`;
      <img src="download.gif" alt="Example GIF" 
          style="width: 100%; max-width: 300px; margin-top: 20px; display: block; border-radius: 10px;">
                       </div>
+
+
                <div class="leaflet-sidebar-pane sidebar" id="filter">
                   <h1 class="leaflet-sidebar-header">Fitriraj podatke na karti</h1>
               </div>
-
-
-
 
 
                <div class="leaflet-sidebar-pane" id="download">
@@ -473,6 +473,25 @@ popisForma += `</div>`;
                   <h4 class="lorem">Preuzmi podatke</h4>
                   <p>Podaci se preuzimaju u popularnom geojson formatu. Ukoliko se odabarli neke filtere, preuzeti file će sadržavati samo filtrirane podatke.</p>
               </div>
+
+              
+                <!-- Sidebar -->
+                <div class="leaflet-sidebar-pane" id="advancedFilter">
+                    <h1 class="leaflet-sidebar-header">Filter Historical Data</h1>
+                    <h4 class="lorem">Select the layer you want to filter</h4>
+                    <div class="form-group">
+                        <label for="activeLayersDropdown">Select a Layer:</label>
+                        <select id="activeLayersDropdown" class="form-control">
+                            <!-- Options will be dynamically added here -->
+                        </select>
+                    </div>
+                    <div id="filterAttributes" class="mt-3">
+                        <!-- Filters will be dynamically added here -->
+                    </div>
+                </div>
+
+
+
 
               <div class="leaflet-sidebar-pane" id="info">
               <h1 class="leaflet-sidebar-header">Lista projekta i formi</h1>       
@@ -551,6 +570,7 @@ popisForma += `</div>`;
         layerName:'OSM'}).addTo(map);
 
 
+
                   objBasemaps = {
             "DOF": lyrDOF,
             "OSM": lyrOSM,
@@ -558,7 +578,7 @@ popisForma += `</div>`;
         };
 
                 objOverlays = {
-         
+
         };
 
 
@@ -582,7 +602,7 @@ popisForma += `</div>`;
                         "weight": 5,
                         "opacity": 0.65
                     }
-                }).addTo(map);
+                });
                 ctlLayers.addOverlay(obalna_linija, "Obalna linija");
 
             })
@@ -879,7 +899,7 @@ L.Control.CustomAttribution = L.Control.extend({
 
 // Create and add the attribution control
 const customAttributionControl = new L.Control.CustomAttribution({
-    attribution: 'Layer Carlit_v2 provided by <a href="https://edc-central.xyz" target="_blank">ODK Central</a>'
+    attribution: 'Layer Carlit_v2 provided by <a href="https://irb-cim.xyz" target="_blank">ODK Central</a>'
 });
 customAttributionControl.addTo(map);
 
@@ -1520,6 +1540,81 @@ document.getElementById('print').addEventListener('click', function (e) {
      map.setView(map.getCenter(), map.getZoom(), { animate: false });
 });
 
+
+
+//_______
+
+// Define the function to check active layers
+function checkActiveLayers() {
+    var activeLayers = [];
+
+    // Loop through all layers in the control
+    ctlLayers._layers.forEach(function(layerObj) {
+        // Check if the layer is currently added to the map
+        if (map.hasLayer(layerObj.layer)) {
+            activeLayers.push(layerObj.name);  // Store the active layer name or object
+        }
+    });
+
+    // Log or process the active layers
+    console.log("Active Layers:", activeLayers);
+    
+    // Call the function to populate the dropdown whenever the sidebar is opened
+    populateActiveLayersDropdown();
+}
+
+// List of layers to exclude from the dropdown
+var excludedLayers = ["DOF", "OSM", "Carlit_v2", "Obalna linija", "Obala fixed"];
+
+// Function to populate the dropdown with active layers
+function populateActiveLayersDropdown() {
+    var dropdown = document.getElementById("activeLayersDropdown");
+    
+    // Clear previous options
+    dropdown.innerHTML = '<option value="">-- Select a layer --</option>';
+    
+    // Loop through all layers in the control
+    ctlLayers._layers.forEach(function(layerObj) {
+    
+        var layerName = layerObj.name;
+        var layerId=layerObj.layer._leaflet_id
+        console.log(layerId)
+        // Check if the layer is currently added to the map and is not in the excluded list
+        if (map.hasLayer(layerObj.layer) && !excludedLayers.includes(layerName)) {
+            // Add the active layer to the dropdown as an option
+            var option = document.createElement("option");
+            option.value = layerId;
+            option.text = layerName;
+            dropdown.appendChild(option);
+        }
+    });
+}
+
+// Event listener for dropdown change
+document.getElementById("activeLayersDropdown").addEventListener("change", function() {
+    var selectedLayerName = this.value;
+    console.log("Selected Layer:", selectedLayerName);
+    
+    // Loop through all layers
+    ctlLayers._layers.forEach(function(layerObj) {
+    
+        var layerName = layerObj.name;
+        
+        // If the layer is selected, add it to the map; otherwise, remove it
+        if (layerName === selectedLayerName) {
+            if (!map.hasLayer(layerObj.layer)) {
+                map.addLayer(layerObj.layer);
+                // Display attributes and unique values after adding the layer
+                displayLayerAttributes(layerObj.layer);
+            }
+        } else if (!excludedLayers.includes(layerName)) {
+            // Remove all layers except the selected one and the excluded layers
+            if (map.hasLayer(layerObj.layer)) {
+                map.removeLayer(layerObj.layer);
+            }
+        }
+    });
+});
 
 
       </script>
